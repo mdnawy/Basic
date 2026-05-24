@@ -7,240 +7,432 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>GCSE Revision Tracker</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f7; color: #1d1d1f; padding: 16px; padding-top: env(safe-area-inset-top, 16px); }
-h1 { font-size: 28px; font-weight: 700; margin-bottom: 16px; }
-.tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.tab { padding: 8px 16px; border-radius: 20px; background: #e8e8ed; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; border: none; }
-.tab.active { background: #007aff; color: white; }
-.card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-.subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.subject-name { font-size: 18px; font-weight: 600; }
-.confidence { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; color: white; }
-.confidence-red { background: #ff3b30; }
-.confidence-amber { background: #ff9500; }
-.confidence-green { background: #34c759; }
-.meta { font-size: 13px; color: #86868b; margin-top: 4px; }
-.meta.stale { color: #ff3b30; font-weight: 500; }
-.btn { padding: 10px 20px; border-radius: 10px; border: none; font-size: 15px; font-weight: 500; cursor: pointer; }
-.btn-primary { background: #007aff; color: white; }
-.btn-secondary { background: #e8e8ed; color: #1d1d1f; }
-.btn-small { padding: 6px 12px; font-size: 13px; }
-.actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
-.modal-overlay.show { display: flex; }
-.modal { background: white; border-radius: 16px; padding: 24px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
-.modal h2 { font-size: 20px; margin-bottom: 16px; }
-.field { margin-bottom: 14px; }
-.field label { display: block; font-size: 13px; font-weight: 500; color: #86868b; margin-bottom: 4px; }
-.field input, .field select, .field textarea { width: 100%; padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 16px; -webkit-appearance: none; }
-.field textarea { height: 60px; resize: none; }
-.modal-actions { display: flex; gap: 8px; margin-top: 16px; }
-.modal-actions .btn { flex: 1; }
-.notes-text { font-size: 14px; color: #3a3a3c; margin-top: 8px; font-style: italic; }
-.toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-.empty { text-align: center; padding: 40px; color: #86868b; }
-.topic-list { margin-top: 8px; }
-.topic-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid #f0f0f0; }
-.topic-name { font-size: 14px; }
-.topic-meta { font-size: 12px; color: #86868b; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f5f5f7;color:#1d1d1f;padding:16px;padding-top:env(safe-area-inset-top,16px)}
+h1{font-size:26px;font-weight:700;margin-bottom:16px}
+h2{font-size:20px;font-weight:600;margin-bottom:12px}
+h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.card{background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.btn{padding:10px 18px;border-radius:10px;border:none;font-size:15px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#007aff;color:white}
+.btn-danger{background:#ff3b30;color:white}
+.btn-secondary{background:#e8e8ed;color:#1d1d1f}
+.btn-small{padding:6px 12px;font-size:13px}
+.toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.nav{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.nav-crumb{font-size:14px;color:#007aff;cursor:pointer}
+.nav-crumb.current{color:#1d1d1f;cursor:default;font-weight:600}
+.nav-sep{color:#86868b;font-size:14px}
+.conf{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;color:white}
+.conf-low{background:#ff3b30}
+.conf-average{background:#ff9500}
+.conf-high{background:#34c759}
+.meta{font-size:13px;color:#86868b;margin-top:4px}
+.meta.stale{color:#ff3b30;font-weight:500}
+.heatmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:16px}
+.heat-cell{border-radius:10px;padding:10px;cursor:pointer;transition:transform 0.1s}
+.heat-cell:active{transform:scale(0.97)}
+.heat-cell .subj-name{font-size:13px;font-weight:600;color:white}
+.heat-cell .subj-meta{font-size:11px;color:rgba(255,255,255,0.85);margin-top:2px}
+.heat-green{background:#34c759}
+.heat-amber{background:#ff9500}
+.heat-red{background:#ff3b30}
+.heat-grey{background:#8e8e93}
+.item-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.item-row:last-child{border-bottom:none}
+.item-info{flex:1}
+.item-name{font-size:15px;font-weight:500}
+.item-actions{display:flex;gap:6px;align-items:center}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.show{display:flex}
+.modal{background:white;border-radius:16px;padding:24px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto}
+.modal h2{margin-bottom:16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:500;color:#86868b;margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px;border:1px solid #d2d2d7;border-radius:8px;font-size:16px;-webkit-appearance:none}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.modal-actions .btn{flex:1}
+.summary-bar{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.summary-stat{text-align:center}
+.summary-stat .num{font-size:24px;font-weight:700}
+.summary-stat .label{font-size:11px;color:#86868b;text-transform:uppercase}
 </style>
 </head>
 <body>
 <h1>📚 GCSE Revision Tracker</h1>
 <div class="toolbar">
-<button class="btn btn-primary" onclick="openLog()">+ Log Revision</button>
-<button class="btn btn-secondary" onclick="openAddSubject()">+ Subject</button>
+<button class="btn btn-secondary" onclick="addSubject()">+ Subject</button>
 <button class="btn btn-secondary" onclick="exportData()">Export</button>
-<button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import</button>
-<input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+<button class="btn btn-secondary" onclick="document.getElementById('imp').click()">Import</button>
+<input type="file" id="imp" accept=".json" style="display:none" onchange="importData(event)">
 </div>
-<div class="tabs" id="tabs"></div>
-<div id="content"></div>
+<div id="app"></div>
 
-<div class="modal-overlay" id="logModal">
-<div class="modal">
-<h2>Log Revision Session</h2>
-<div class="field"><label>Subject</label><select id="logSubject"></select></div>
-<div class="field"><label>Topic</label><input id="logTopic" placeholder="e.g. Photosynthesis"></div>
-<div class="field"><label>Date</label><input type="date" id="logDate"></div>
-<div class="field"><label>Duration (mins)</label><input type="number" id="logDuration" placeholder="30"></div>
-<div class="field"><label>Confidence</label>
-<select id="logConfidence"><option value="red">Red - Not confident</option><option value="amber">Amber - Getting there</option><option value="green">Green - Confident</option></select>
-</div>
-<div class="field"><label>Notes</label><textarea id="logNotes" placeholder="Optional notes..."></textarea></div>
-<div class="modal-actions">
-<button class="btn btn-secondary" onclick="closeModal('logModal')">Cancel</button>
-<button class="btn btn-primary" onclick="saveLog()">Save</button>
-</div>
-</div>
-</div>
-
-<div class="modal-overlay" id="addSubjectModal">
-<div class="modal">
-<h2>Add Subject</h2>
-<div class="field"><label>Subject Name</label><input id="newSubjectName" placeholder="e.g. Chemistry"></div>
-<div class="modal-actions">
-<button class="btn btn-secondary" onclick="closeModal('addSubjectModal')">Cancel</button>
-<button class="btn btn-primary" onclick="saveSubject()">Add</button>
-</div>
-</div>
+<div class="modal-overlay" id="modal">
+<div class="modal" id="modalContent"></div>
 </div>
 
 <script>
-const DEFAULT_SUBJECTS = ['English', 'Biology', 'Maths', 'Physics', 'French', 'Music'];
-let data = loadData();
-let activeTab = 'all';
+let data = JSON.parse(localStorage.getItem('gcse5') || 'null') || {
+  subjects: [
+    {name:'Maths',topics:[
+      {name:'Number',subtopics:[{name:'Fractions, decimals & percentages',lastRevised:null,confidence:null},{name:'Indices & standard form',lastRevised:null,confidence:null},{name:'Surds',lastRevised:null,confidence:null},{name:'Bounds & estimation',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Algebra',subtopics:[{name:'Expressions & formulae',lastRevised:null,confidence:null},{name:'Linear equations & inequalities',lastRevised:null,confidence:null},{name:'Quadratics',lastRevised:null,confidence:null},{name:'Simultaneous equations',lastRevised:null,confidence:null},{name:'Sequences',lastRevised:null,confidence:null},{name:'Functions & graphs',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Ratio, Proportion & Rates of Change',subtopics:[{name:'Ratio & proportion',lastRevised:null,confidence:null},{name:'Percentages & compound interest',lastRevised:null,confidence:null},{name:'Speed, density & pressure',lastRevised:null,confidence:null},{name:'Direct & inverse proportion',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Geometry & Measures',subtopics:[{name:'Angles & polygons',lastRevised:null,confidence:null},{name:'Area & perimeter',lastRevised:null,confidence:null},{name:'Volume & surface area',lastRevised:null,confidence:null},{name:'Transformations',lastRevised:null,confidence:null},{name:'Pythagoras & trigonometry',lastRevised:null,confidence:null},{name:'Circle theorems',lastRevised:null,confidence:null},{name:'Vectors',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Probability',subtopics:[{name:'Basic probability',lastRevised:null,confidence:null},{name:'Combined events & tree diagrams',lastRevised:null,confidence:null},{name:'Conditional probability',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Statistics',subtopics:[{name:'Averages & spread',lastRevised:null,confidence:null},{name:'Representing data',lastRevised:null,confidence:null},{name:'Scatter graphs & correlation',lastRevised:null,confidence:null},{name:'Sampling',lastRevised:null,confidence:null}],lastRevised:null,confidence:null}
+    ]},
+    {name:'English',topics:[
+      {name:'Language Paper 1 - Fiction',subtopics:[{name:'Comprehension & inference',lastRevised:null,confidence:null},{name:'Language analysis',lastRevised:null,confidence:null},{name:'Structure analysis',lastRevised:null,confidence:null},{name:'Evaluation',lastRevised:null,confidence:null},{name:'Creative writing',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Language Paper 2 - Non-fiction',subtopics:[{name:'Comprehension & summary',lastRevised:null,confidence:null},{name:'Language analysis',lastRevised:null,confidence:null},{name:'Comparing texts',lastRevised:null,confidence:null},{name:'Transactional writing',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Literature - Shakespeare',subtopics:[{name:'Key scenes & quotes',lastRevised:null,confidence:null},{name:'Character analysis',lastRevised:null,confidence:null},{name:'Themes',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Literature - 19th Century Novel',subtopics:[{name:'Plot & structure',lastRevised:null,confidence:null},{name:'Character analysis',lastRevised:null,confidence:null},{name:'Context & themes',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Literature - Modern Text',subtopics:[{name:'Plot & structure',lastRevised:null,confidence:null},{name:'Character analysis',lastRevised:null,confidence:null},{name:'Themes & context',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Literature - Poetry',subtopics:[{name:'Power & conflict anthology',lastRevised:null,confidence:null},{name:'Unseen poetry',lastRevised:null,confidence:null},{name:'Comparing poems',lastRevised:null,confidence:null}],lastRevised:null,confidence:null}
+    ]},
+    {name:'Physics',topics:[
+      {name:'Energy',subtopics:[{name:'Energy stores & transfers',lastRevised:null,confidence:null},{name:'Conservation & dissipation',lastRevised:null,confidence:null},{name:'Energy resources',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Electricity',subtopics:[{name:'Circuits & components',lastRevised:null,confidence:null},{name:'Series & parallel',lastRevised:null,confidence:null},{name:'Domestic uses & safety',lastRevised:null,confidence:null},{name:'Energy transfers in circuits',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Particle Model of Matter',subtopics:[{name:'Density',lastRevised:null,confidence:null},{name:'States of matter & changes',lastRevised:null,confidence:null},{name:'Internal energy & specific heat',lastRevised:null,confidence:null},{name:'Pressure in gases',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Atomic Structure & Radiation',subtopics:[{name:'Atomic structure',lastRevised:null,confidence:null},{name:'Radioactive decay',lastRevised:null,confidence:null},{name:'Half-life',lastRevised:null,confidence:null},{name:'Uses & hazards of radiation',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Forces',subtopics:[{name:'Contact & non-contact forces',lastRevised:null,confidence:null},{name:'Speed, velocity & acceleration',lastRevised:null,confidence:null},{name:'Newton\'s laws',lastRevised:null,confidence:null},{name:'Momentum',lastRevised:null,confidence:null},{name:'Stopping distances',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Waves',subtopics:[{name:'Transverse & longitudinal',lastRevised:null,confidence:null},{name:'Electromagnetic spectrum',lastRevised:null,confidence:null},{name:'Reflection & refraction',lastRevised:null,confidence:null},{name:'Sound waves',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Magnetism & Electromagnetism',subtopics:[{name:'Magnetic fields',lastRevised:null,confidence:null},{name:'Motor effect',lastRevised:null,confidence:null},{name:'Electromagnetic induction',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Space (Physics only)',subtopics:[{name:'Solar system & orbits',lastRevised:null,confidence:null},{name:'Life cycle of stars',lastRevised:null,confidence:null},{name:'Red shift & Big Bang',lastRevised:null,confidence:null}],lastRevised:null,confidence:null}
+    ]},
+    {name:'Chemistry',topics:[
+      {name:'Atomic Structure & Periodic Table',subtopics:[{name:'Atoms, elements & compounds',lastRevised:null,confidence:null},{name:'Mixtures & separation',lastRevised:null,confidence:null},{name:'Electronic structure',lastRevised:null,confidence:null},{name:'Periodic table development',lastRevised:null,confidence:null},{name:'Groups 1, 7 & 0',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Bonding & Structure',subtopics:[{name:'Ionic bonding',lastRevised:null,confidence:null},{name:'Covalent bonding',lastRevised:null,confidence:null},{name:'Metallic bonding',lastRevised:null,confidence:null},{name:'Properties of structures',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Quantitative Chemistry',subtopics:[{name:'Relative formula mass',lastRevised:null,confidence:null},{name:'Moles & concentration',lastRevised:null,confidence:null},{name:'Balancing equations',lastRevised:null,confidence:null},{name:'Yield & atom economy',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Chemical Changes',subtopics:[{name:'Reactivity series & extraction',lastRevised:null,confidence:null},{name:'Acids & alkalis',lastRevised:null,confidence:null},{name:'Neutralisation & salts',lastRevised:null,confidence:null},{name:'Electrolysis',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Energy Changes',subtopics:[{name:'Exothermic & endothermic',lastRevised:null,confidence:null},{name:'Reaction profiles',lastRevised:null,confidence:null},{name:'Bond energy calculations',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Rates & Equilibrium',subtopics:[{name:'Rate of reaction & factors',lastRevised:null,confidence:null},{name:'Collision theory',lastRevised:null,confidence:null},{name:'Reversible reactions & equilibrium',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Organic Chemistry',subtopics:[{name:'Crude oil & hydrocarbons',lastRevised:null,confidence:null},{name:'Alkanes & alkenes',lastRevised:null,confidence:null},{name:'Cracking & polymerisation',lastRevised:null,confidence:null},{name:'Alcohols & carboxylic acids',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Chemical Analysis',subtopics:[{name:'Purity & formulations',lastRevised:null,confidence:null},{name:'Chromatography',lastRevised:null,confidence:null},{name:'Gas tests',lastRevised:null,confidence:null},{name:'Flame tests & ion tests',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Atmosphere & Resources',subtopics:[{name:'Earth\'s atmosphere',lastRevised:null,confidence:null},{name:'Greenhouse gases & climate',lastRevised:null,confidence:null},{name:'Water treatment',lastRevised:null,confidence:null},{name:'Finite & renewable resources',lastRevised:null,confidence:null}],lastRevised:null,confidence:null}
+    ]},
+    {name:'Biology',topics:[
+      {name:'Cell Biology',subtopics:[{name:'Cell structure',lastRevised:null,confidence:null},{name:'Cell division & mitosis',lastRevised:null,confidence:null},{name:'Transport in cells',lastRevised:null,confidence:null},{name:'Stem cells',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Organisation',subtopics:[{name:'Digestive system & enzymes',lastRevised:null,confidence:null},{name:'Heart & blood vessels',lastRevised:null,confidence:null},{name:'Blood & disease',lastRevised:null,confidence:null},{name:'Plant organ systems',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Infection & Response',subtopics:[{name:'Pathogens & disease',lastRevised:null,confidence:null},{name:'Immune system & vaccination',lastRevised:null,confidence:null},{name:'Antibiotics & drug development',lastRevised:null,confidence:null},{name:'Monoclonal antibodies',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Bioenergetics',subtopics:[{name:'Photosynthesis',lastRevised:null,confidence:null},{name:'Respiration',lastRevised:null,confidence:null},{name:'Metabolism',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Homeostasis & Response',subtopics:[{name:'Nervous system',lastRevised:null,confidence:null},{name:'Hormones & endocrine system',lastRevised:null,confidence:null},{name:'Reproduction & contraception',lastRevised:null,confidence:null},{name:'Blood glucose regulation',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Inheritance & Evolution',subtopics:[{name:'DNA & genetics',lastRevised:null,confidence:null},{name:'Natural selection & evolution',lastRevised:null,confidence:null},{name:'Selective breeding & genetic engineering',lastRevised:null,confidence:null},{name:'Classification',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Ecology',subtopics:[{name:'Ecosystems & communities',lastRevised:null,confidence:null},{name:'Food chains & cycles',lastRevised:null,confidence:null},{name:'Biodiversity',lastRevised:null,confidence:null},{name:'Human impact & sustainability',lastRevised:null,confidence:null}],lastRevised:null,confidence:null}
+    ]},
+    {name:'Music',topics:[
+      {name:'Understanding Music',subtopics:[{name:'Elements of music (tempo, dynamics, texture)',lastRevised:null,confidence:null},{name:'Musical structures & forms',lastRevised:null,confidence:null},{name:'Instruments & ensembles',lastRevised:null,confidence:null},{name:'Music notation',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Set Works & Analysis',subtopics:[{name:'Set work 1',lastRevised:null,confidence:null},{name:'Set work 2',lastRevised:null,confidence:null},{name:'Set work 3',lastRevised:null,confidence:null},{name:'Set work 4',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Composing',subtopics:[{name:'Composition techniques',lastRevised:null,confidence:null},{name:'Melody writing',lastRevised:null,confidence:null},{name:'Harmony & chords',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Performing',subtopics:[{name:'Solo performance',lastRevised:null,confidence:null},{name:'Ensemble performance',lastRevised:null,confidence:null}],lastRevised:null,confidence:null}
+    ]},
+    {name:'Geography',topics:[
+      {name:'Living World',subtopics:[{name:'Ecosystems',lastRevised:null,confidence:null},{name:'Tropical rainforests',lastRevised:null,confidence:null},{name:'Hot deserts',lastRevised:null,confidence:null},{name:'Cold environments',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Physical Landscapes',subtopics:[{name:'Coastal landscapes',lastRevised:null,confidence:null},{name:'River landscapes',lastRevised:null,confidence:null},{name:'Glacial landscapes',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Natural Hazards',subtopics:[{name:'Tectonic hazards',lastRevised:null,confidence:null},{name:'Weather hazards',lastRevised:null,confidence:null},{name:'Climate change',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Urban Issues',subtopics:[{name:'Urbanisation & cities',lastRevised:null,confidence:null},{name:'Sustainable urban living',lastRevised:null,confidence:null},{name:'UK city case study',lastRevised:null,confidence:null},{name:'NEE/LIC city case study',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Economic World',subtopics:[{name:'Development & global inequality',lastRevised:null,confidence:null},{name:'Changing UK economy',lastRevised:null,confidence:null},{name:'NEE case study (e.g. Nigeria)',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Resource Management',subtopics:[{name:'Food, water & energy overview',lastRevised:null,confidence:null},{name:'Water management (or Food/Energy)',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Fieldwork & Skills',subtopics:[{name:'Map skills & OS maps',lastRevised:null,confidence:null},{name:'Fieldwork techniques',lastRevised:null,confidence:null},{name:'Graphical skills',lastRevised:null,confidence:null}],lastRevised:null,confidence:null}
+    ]},
+    {name:'French',topics:[
+      {name:'Family and Friends',subtopics:[{name:'Describing myself and others',lastRevised:null,confidence:null},{name:'Relationships',lastRevised:null,confidence:null},{name:'Social activities & events',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'School and Education',subtopics:[{name:'School subjects & opinions',lastRevised:null,confidence:null},{name:'School life & rules',lastRevised:null,confidence:null},{name:'School events & exchanges',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Future Opportunities',subtopics:[{name:'Plans for the future',lastRevised:null,confidence:null},{name:'Jobs and career ambitions',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Customs, Festivals & Celebrations',subtopics:[{name:'French festivals & traditions',lastRevised:null,confidence:null},{name:'Food & meals',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Travel and Tourism',subtopics:[{name:'Holiday destinations & activities',lastRevised:null,confidence:null},{name:'Booking & accommodation',lastRevised:null,confidence:null},{name:'Directions & transport',lastRevised:null,confidence:null},{name:'Describing past holidays',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Life in My Local Area',subtopics:[{name:'Home & local area',lastRevised:null,confidence:null},{name:'Shopping & services',lastRevised:null,confidence:null},{name:'Weather & climate',lastRevised:null,confidence:null},{name:'Describing where you live',lastRevised:null,confidence:null},{name:'Environmental issues',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Lifestyle and Wellbeing',subtopics:[{name:'Daily routine',lastRevised:null,confidence:null},{name:'Food, diet & health',lastRevised:null,confidence:null},{name:'Sport & exercise',lastRevised:null,confidence:null},{name:'Illness & injuries',lastRevised:null,confidence:null},{name:'Mental health & wellbeing',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Social Media and Gaming',subtopics:[{name:'Technology in everyday life',lastRevised:null,confidence:null},{name:'Advantages & disadvantages of social media',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Grammar',subtopics:[{name:'Present tense (regular & irregular)',lastRevised:null,confidence:null},{name:'Past tenses (passé composé & imparfait)',lastRevised:null,confidence:null},{name:'Future & conditional',lastRevised:null,confidence:null},{name:'Pronouns & agreements',lastRevised:null,confidence:null},{name:'Negatives',lastRevised:null,confidence:null},{name:'Questions',lastRevised:null,confidence:null}],lastRevised:null,confidence:null},
+      {name:'Skills',subtopics:[{name:'Listening',lastRevised:null,confidence:null},{name:'Reading',lastRevised:null,confidence:null},{name:'Speaking (role play, photo card, conversation)',lastRevised:null,confidence:null},{name:'Writing (structured & open)',lastRevised:null,confidence:null}],lastRevised:null,confidence:null}
+    ]}
+  ]
+};
+let view = {page:'home', subjectIdx:null, topicIdx:null};
 
-function loadData() {
-  const saved = localStorage.getItem('gcse-tracker');
-  if (saved) return JSON.parse(saved);
-  return { subjects: DEFAULT_SUBJECTS, sessions: [] };
+function save(){localStorage.setItem('gcse5',JSON.stringify(data))}
+function render(){
+  if(view.page==='home') renderHome();
+  else if(view.page==='subject') renderSubject();
+  else if(view.page==='topic') renderTopic();
 }
 
-function save() { localStorage.setItem('gcse-tracker', JSON.stringify(data)); }
-
-function render() {
-  renderTabs();
-  renderContent();
+function daysSince(dateStr){
+  if(!dateStr) return null;
+  return Math.floor((new Date()-new Date(dateStr))/86400000);
 }
 
-function renderTabs() {
-  const tabs = document.getElementById('tabs');
-  const counts = {};
-  data.subjects.forEach(s => counts[s] = data.sessions.filter(x => x.subject === s).length);
-  tabs.innerHTML = `<button class="tab ${activeTab==='all'?'active':''}" onclick="setTab('all')">All</button>` +
-    data.subjects.map(s => `<button class="tab ${activeTab===s?'active':''}" onclick="setTab('${s}')">${s} (${counts[s]||0})</button>`).join('');
+function subjectDaysSince(subj){
+  let dates=[];
+  subj.topics.forEach(t=>{
+    if(t.lastRevised) dates.push(t.lastRevised);
+    (t.subtopics||[]).forEach(st=>{if(st.lastRevised) dates.push(st.lastRevised)});
+  });
+  if(!dates.length) return null;
+  const most=dates.sort().pop();
+  return daysSince(most);
 }
 
-function renderContent() {
-  const el = document.getElementById('content');
-  if (activeTab === 'all') { renderOverview(el); }
-  else { renderSubject(el, activeTab); }
+function subjectOldestUnrevised(subj){
+  let worst=0;
+  subj.topics.forEach(t=>{
+    const d=daysSince(t.lastRevised);
+    if(d===null||d>worst) worst=d===null?999:d;
+    (t.subtopics||[]).forEach(st=>{
+      const sd=daysSince(st.lastRevised);
+      if(sd===null||sd>worst) worst=sd===null?999:sd;
+    });
+  });
+  return worst;
 }
 
-function renderOverview(el) {
-  const now = new Date();
-  let html = '';
-  data.subjects.forEach(subj => {
-    const sessions = data.sessions.filter(s => s.subject === subj);
-    const last = sessions.length ? sessions.sort((a,b) => b.date.localeCompare(a.date))[0] : null;
-    const lastDate = last ? new Date(last.date) : null;
-    const daysSince = lastDate ? Math.floor((now - lastDate) / 86400000) : null;
-    const stale = daysSince !== null && daysSince > 7;
-    const latestConf = last ? last.confidence : null;
-    const totalMins = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
-    const topics = [...new Set(sessions.map(s => s.topic).filter(Boolean))];
+function heatColor(subj){
+  if(!subj.topics.length) return 'heat-grey';
+  const worst=subjectOldestUnrevised(subj);
+  if(worst>=14) return 'heat-red';
+  if(worst>=7) return 'heat-amber';
+  return 'heat-green';
+}
 
-    html += `<div class="card">
-      <div class="subject-header">
-        <span class="subject-name">${subj}</span>
-        ${latestConf ? `<span class="confidence confidence-${latestConf}">${latestConf.toUpperCase()}</span>` : ''}
-      </div>
-      <div class="meta ${stale?'stale':''}">Last revised: ${last ? formatDate(last.date) + (stale ? ` ⚠️ ${daysSince} days ago` : ` (${daysSince}d ago)`) : 'Never'}</div>
-      <div class="meta">Sessions: ${sessions.length} · Total: ${totalMins} mins${topics.length ? ' · Topics: ' + topics.slice(0,3).join(', ') + (topics.length > 3 ? '...' : '') : ''}</div>
+function renderHome(){
+  const app=document.getElementById('app');
+  const totalTopics=data.subjects.reduce((s,subj)=>s+subj.topics.length+subj.topics.reduce((a,t)=>a+(t.subtopics||[]).length,0),0);
+  const staleCount=data.subjects.filter(s=>s.topics.length&&subjectOldestUnrevised(s)>=14).length;
+
+  let html=`<div class="summary-bar">
+    <div class="summary-stat"><div class="num">${data.subjects.length}</div><div class="label">Subjects</div></div>
+    <div class="summary-stat"><div class="num">${totalTopics}</div><div class="label">Topics</div></div>
+    <div class="summary-stat"><div class="num" style="color:${staleCount?'#ff3b30':'#34c759'}">${staleCount}</div><div class="label">Need Attention</div></div>
+  </div>`;
+
+  html+=`<h2>Heatmap</h2><div class="heatmap">`;
+  data.subjects.forEach((subj,i)=>{
+    const d=subjectDaysSince(subj);
+    const dText=d===null?'No data':d+'d since last revision';
+    html+=`<div class="heat-cell ${heatColor(subj)}" onclick="openSubject(${i})">
+      <div class="subj-name">${subj.name}</div>
+      <div class="subj-meta">${dText}</div>
     </div>`;
   });
-  if (!data.subjects.length) html = '<div class="empty">No subjects added yet.</div>';
-  el.innerHTML = html;
+  html+=`</div>`;
+  app.innerHTML=html;
 }
 
-function renderSubject(el, subj) {
-  const sessions = data.sessions.filter(s => s.subject === subj).sort((a,b) => b.date.localeCompare(a.date));
-  let html = `<div class="card"><div class="subject-header"><span class="subject-name">${subj}</span>
-    <button class="btn btn-small btn-secondary" onclick="deleteSubject('${subj}')">Delete Subject</button></div></div>`;
-  if (!sessions.length) { html += '<div class="empty">No revision sessions logged yet.</div>'; }
-  else {
-    sessions.forEach((s, i) => {
-      html += `<div class="card">
-        <div class="subject-header">
-          <span class="topic-name">${s.topic || 'General'}</span>
-          <span class="confidence confidence-${s.confidence}">${s.confidence.toUpperCase()}</span>
+function renderSubject(){
+  const subj=data.subjects[view.subjectIdx];
+  const app=document.getElementById('app');
+  const d=subjectDaysSince(subj);
+
+  let html=`<div class="nav">
+    <span class="nav-crumb" onclick="goHome()">Home</span><span class="nav-sep">›</span>
+    <span class="nav-crumb current">${subj.name}</span>
+  </div>`;
+
+  html+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">
+    <div><h2 style="margin:0">${subj.name}</h2>
+    <div class="meta">${d===null?'No revision data':'Last revised '+d+' day'+(d===1?'':'s')+' ago'}</div></div>
+    <div style="display:flex;gap:6px"><button class="btn btn-small btn-primary" onclick="addTopic()">+ Topic</button>
+    <button class="btn btn-small btn-danger" onclick="deleteSubject(${view.subjectIdx})">Delete</button></div>
+  </div></div>`;
+
+  if(!subj.topics.length){
+    html+=`<div class="card"><p style="color:#86868b;text-align:center">No topics yet. Add one to start tracking.</p></div>`;
+  } else {
+    subj.topics.forEach((t,ti)=>{
+      const td=daysSince(t.lastRevised);
+      const stale=td===null||td>=14;
+      html+=`<div class="card" style="${stale?'border-left:4px solid #ff3b30':''}">
+        <div class="item-row" style="border:none;padding:0">
+          <div class="item-info" onclick="openTopic(${ti})" style="cursor:pointer">
+            <div class="item-name">${t.name} ${t.confidence?'<span class=\"conf conf-'+t.confidence+'\">'+t.confidence.toUpperCase()+'</span>':''}</div>
+            <div class="meta ${stale?'stale':''}">${t.lastRevised?formatDate(t.lastRevised)+(stale?' ⚠️ '+td+'d ago':' ('+td+'d ago)'):'Never revised'}</div>
+            ${(t.subtopics||[]).length?'<div class="meta">'+t.subtopics.length+' subtopic'+(t.subtopics.length===1?'':'s')+'</div>':''}
+          </div>
+          <div class="item-actions">
+            <button class="btn btn-small btn-secondary" onclick="editTopic(${ti})">Edit</button>
+            <button class="btn btn-small btn-secondary" onclick="revise(${ti})">✓ Revised</button>
+          </div>
         </div>
-        <div class="meta">${formatDate(s.date)}${s.duration ? ' · ' + s.duration + ' mins' : ''}</div>
-        ${s.notes ? `<div class="notes-text">${s.notes}</div>` : ''}
-        <div class="actions"><button class="btn btn-small btn-secondary" onclick="deleteSession(${data.sessions.indexOf(s)})">Delete</button></div>
       </div>`;
     });
   }
-  el.innerHTML = html;
+  app.innerHTML=html;
 }
 
-function setTab(t) { activeTab = t; render(); }
+function renderTopic(){
+  const subj=data.subjects[view.subjectIdx];
+  const topic=subj.topics[view.topicIdx];
+  const app=document.getElementById('app');
 
-function openLog() {
-  const sel = document.getElementById('logSubject');
-  sel.innerHTML = data.subjects.map(s => `<option value="${s}" ${s===activeTab&&activeTab!=='all'?'selected':''}>${s}</option>`).join('');
-  document.getElementById('logDate').value = new Date().toISOString().split('T')[0];
-  document.getElementById('logTopic').value = '';
-  document.getElementById('logDuration').value = '';
-  document.getElementById('logConfidence').value = 'amber';
-  document.getElementById('logNotes').value = '';
-  document.getElementById('logModal').classList.add('show');
+  let html=`<div class="nav">
+    <span class="nav-crumb" onclick="goHome()">Home</span><span class="nav-sep">›</span>
+    <span class="nav-crumb" onclick="openSubject(${view.subjectIdx})">${subj.name}</span><span class="nav-sep">›</span>
+    <span class="nav-crumb current">${topic.name}</span>
+  </div>`;
+
+  const td=daysSince(topic.lastRevised);
+  html+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">
+    <div><h2 style="margin:0">${topic.name}</h2>
+    <div class="meta">${topic.lastRevised?'Last revised: '+formatDate(topic.lastRevised)+' ('+td+'d ago)':'Never revised'}</div>
+    ${topic.confidence?'<div style="margin-top:6px"><span class="conf conf-'+topic.confidence+'">'+topic.confidence.toUpperCase()+'</span></div>':''}
+    </div>
+    <button class="btn btn-small btn-primary" onclick="addSubtopic()">+ Subtopic</button>
+  </div></div>`;
+
+  if(!(topic.subtopics||[]).length){
+    html+=`<div class="card"><p style="color:#86868b;text-align:center">No subtopics. Add one or track at topic level.</p></div>`;
+  } else {
+    html+=`<div class="card">`;
+    topic.subtopics.forEach((st,si)=>{
+      const sd=daysSince(st.lastRevised);
+      const stale=sd===null||sd>=14;
+      html+=`<div class="item-row">
+        <div class="item-info">
+          <div class="item-name">${st.name} ${st.confidence?'<span class=\"conf conf-'+st.confidence+'\">'+st.confidence.toUpperCase()+'</span>':''}</div>
+          <div class="meta ${stale?'stale':''}">${st.lastRevised?formatDate(st.lastRevised)+(stale?' ⚠️ '+sd+'d ago':' ('+sd+'d ago)'):'Never revised'}</div>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-small btn-secondary" onclick="editSubtopic(${si})">Edit</button>
+          <button class="btn btn-small btn-secondary" onclick="reviseSubtopic(${si})">✓</button>
+          <button class="btn btn-small btn-danger" onclick="deleteSubtopic(${si})">✕</button>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  app.innerHTML=html;
 }
 
-function saveLog() {
-  const session = {
-    subject: document.getElementById('logSubject').value,
-    topic: document.getElementById('logTopic').value.trim(),
-    date: document.getElementById('logDate').value,
-    duration: parseInt(document.getElementById('logDuration').value) || 0,
-    confidence: document.getElementById('logConfidence').value,
-    notes: document.getElementById('logNotes').value.trim()
-  };
-  if (!session.date) return alert('Please select a date');
-  data.sessions.push(session);
-  save(); closeModal('logModal'); render();
+// Navigation
+function goHome(){view={page:'home'};render()}
+function openSubject(i){view={page:'subject',subjectIdx:i};render()}
+function openTopic(i){view.page='topic';view.topicIdx=i;render()}
+
+// Modals
+function showModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modal').classList.add('show')}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+
+// Subject CRUD
+function addSubject(){
+  showModal(`<h2>Add Subject</h2>
+    <div class="field"><label>Name</label><input id="f_name" placeholder="e.g. Chemistry"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveNewSubject()">Add</button></div>`);
+}
+function saveNewSubject(){
+  const n=document.getElementById('f_name').value.trim();
+  if(!n)return;
+  data.subjects.push({name:n,topics:[]});save();closeModal();render();
+}
+function deleteSubject(i){
+  if(!confirm('Delete '+data.subjects[i].name+' and all its topics?'))return;
+  data.subjects.splice(i,1);save();goHome();
 }
 
-function openAddSubject() { document.getElementById('newSubjectName').value = ''; document.getElementById('addSubjectModal').classList.add('show'); }
-
-function saveSubject() {
-  const name = document.getElementById('newSubjectName').value.trim();
-  if (!name) return;
-  if (data.subjects.includes(name)) return alert('Subject already exists');
-  data.subjects.push(name);
-  save(); closeModal('addSubjectModal'); render();
+// Topic CRUD
+function addTopic(){
+  showModal(`<h2>Add Topic</h2>
+    <div class="field"><label>Topic Name</label><input id="f_name" placeholder="e.g. Photosynthesis"></div>
+    <div class="field"><label>Last Revised</label><input type="date" id="f_date" value="${today()}"></div>
+    <div class="field"><label>Confidence</label><select id="f_conf"><option value="">Not set</option><option value="low">Low</option><option value="average">Average</option><option value="high">High</option></select></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveNewTopic()">Add</button></div>`);
+}
+function saveNewTopic(){
+  const subj=data.subjects[view.subjectIdx];
+  const n=document.getElementById('f_name').value.trim();if(!n)return;
+  subj.topics.push({name:n,lastRevised:document.getElementById('f_date').value||null,confidence:document.getElementById('f_conf').value||null,subtopics:[]});
+  save();closeModal();render();
+}
+function editTopic(ti){
+  const t=data.subjects[view.subjectIdx].topics[ti];
+  showModal(`<h2>Edit Topic</h2>
+    <div class="field"><label>Name</label><input id="f_name" value="${t.name}"></div>
+    <div class="field"><label>Last Revised</label><input type="date" id="f_date" value="${t.lastRevised||''}"></div>
+    <div class="field"><label>Confidence</label><select id="f_conf"><option value="">Not set</option><option value="low" ${t.confidence==='low'?'selected':''}>Low</option><option value="average" ${t.confidence==='average'?'selected':''}>Average</option><option value="high" ${t.confidence==='high'?'selected':''}>High</option></select></div>
+    <div class="modal-actions"><button class="btn btn-danger" onclick="deleteTopic(${ti})">Delete</button>
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveEditTopic(${ti})">Save</button></div>`);
+}
+function saveEditTopic(ti){
+  const t=data.subjects[view.subjectIdx].topics[ti];
+  t.name=document.getElementById('f_name').value.trim()||t.name;
+  t.lastRevised=document.getElementById('f_date').value||null;
+  t.confidence=document.getElementById('f_conf').value||null;
+  save();closeModal();render();
+}
+function deleteTopic(ti){
+  if(!confirm('Delete this topic and all subtopics?'))return;
+  data.subjects[view.subjectIdx].topics.splice(ti,1);save();closeModal();
+  view.page='subject';view.topicIdx=null;render();
+}
+function revise(ti){
+  const t=data.subjects[view.subjectIdx].topics[ti];
+  t.lastRevised=today();save();render();
 }
 
-function deleteSubject(subj) {
-  if (!confirm(`Delete ${subj} and all its sessions?`)) return;
-  data.subjects = data.subjects.filter(s => s !== subj);
-  data.sessions = data.sessions.filter(s => s.subject !== subj);
-  activeTab = 'all'; save(); render();
+// Subtopic CRUD
+function addSubtopic(){
+  showModal(`<h2>Add Subtopic</h2>
+    <div class="field"><label>Name</label><input id="f_name" placeholder="e.g. Light reactions"></div>
+    <div class="field"><label>Last Revised</label><input type="date" id="f_date" value="${today()}"></div>
+    <div class="field"><label>Confidence</label><select id="f_conf"><option value="">Not set</option><option value="low">Low</option><option value="average">Average</option><option value="high">High</option></select></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveNewSubtopic()">Add</button></div>`);
+}
+function saveNewSubtopic(){
+  const t=data.subjects[view.subjectIdx].topics[view.topicIdx];
+  const n=document.getElementById('f_name').value.trim();if(!n)return;
+  if(!t.subtopics)t.subtopics=[];
+  t.subtopics.push({name:n,lastRevised:document.getElementById('f_date').value||null,confidence:document.getElementById('f_conf').value||null});
+  save();closeModal();render();
+}
+function editSubtopic(si){
+  const st=data.subjects[view.subjectIdx].topics[view.topicIdx].subtopics[si];
+  showModal(`<h2>Edit Subtopic</h2>
+    <div class="field"><label>Name</label><input id="f_name" value="${st.name}"></div>
+    <div class="field"><label>Last Revised</label><input type="date" id="f_date" value="${st.lastRevised||''}"></div>
+    <div class="field"><label>Confidence</label><select id="f_conf"><option value="">Not set</option><option value="low" ${st.confidence==='low'?'selected':''}>Low</option><option value="average" ${st.confidence==='average'?'selected':''}>Average</option><option value="high" ${st.confidence==='high'?'selected':''}>High</option></select></div>
+    <div class="modal-actions"><button class="btn btn-danger" onclick="deleteSubtopic(${si})">Delete</button>
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveEditSubtopic(${si})">Save</button></div>`);
+}
+function saveEditSubtopic(si){
+  const st=data.subjects[view.subjectIdx].topics[view.topicIdx].subtopics[si];
+  st.name=document.getElementById('f_name').value.trim()||st.name;
+  st.lastRevised=document.getElementById('f_date').value||null;
+  st.confidence=document.getElementById('f_conf').value||null;
+  save();closeModal();render();
+}
+function deleteSubtopic(si){
+  if(!confirm('Delete this subtopic?'))return;
+  data.subjects[view.subjectIdx].topics[view.topicIdx].subtopics.splice(si,1);
+  save();closeModal();render();
+}
+function reviseSubtopic(si){
+  data.subjects[view.subjectIdx].topics[view.topicIdx].subtopics[si].lastRevised=today();
+  save();render();
 }
 
-function deleteSession(idx) {
-  if (!confirm('Delete this session?')) return;
-  data.sessions.splice(idx, 1);
-  save(); render();
+// Utilities
+function today(){return new Date().toISOString().split('T')[0]}
+function formatDate(d){return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+
+// Export/Import
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='gcse-revision-'+today()+'.json';a.click();
 }
-
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-
-function formatDate(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
-
-function exportData() {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'gcse-revision-' + new Date().toISOString().split('T')[0] + '.json';
-  a.click();
-}
-
-function importData(e) {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    try {
-      const imported = JSON.parse(ev.target.result);
-      if (imported.subjects && imported.sessions) {
-        data = imported; save(); render();
-        alert('Data imported successfully');
-      } else { alert('Invalid file format'); }
-    } catch { alert('Error reading file'); }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
+function importData(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=function(ev){
+    try{const d=JSON.parse(ev.target.result);if(d.subjects){data=d;save();render();alert('Imported!');}else alert('Invalid file');}
+    catch{alert('Error reading file');}
+  };r.readAsText(file);e.target.value='';
 }
 
 render();
