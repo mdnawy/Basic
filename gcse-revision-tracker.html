@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>GCSE Revision Tracker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f7; color: #1d1d1f; padding: 16px; padding-top: env(safe-area-inset-top, 16px); }
+h1 { font-size: 28px; font-weight: 700; margin-bottom: 16px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tab { padding: 8px 16px; border-radius: 20px; background: #e8e8ed; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; border: none; }
+.tab.active { background: #007aff; color: white; }
+.card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.subject-name { font-size: 18px; font-weight: 600; }
+.confidence { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; color: white; }
+.confidence-red { background: #ff3b30; }
+.confidence-amber { background: #ff9500; }
+.confidence-green { background: #34c759; }
+.meta { font-size: 13px; color: #86868b; margin-top: 4px; }
+.meta.stale { color: #ff3b30; font-weight: 500; }
+.btn { padding: 10px 20px; border-radius: 10px; border: none; font-size: 15px; font-weight: 500; cursor: pointer; }
+.btn-primary { background: #007aff; color: white; }
+.btn-secondary { background: #e8e8ed; color: #1d1d1f; }
+.btn-small { padding: 6px 12px; font-size: 13px; }
+.actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+.modal-overlay.show { display: flex; }
+.modal { background: white; border-radius: 16px; padding: 24px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+.modal h2 { font-size: 20px; margin-bottom: 16px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 13px; font-weight: 500; color: #86868b; margin-bottom: 4px; }
+.field input, .field select, .field textarea { width: 100%; padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 16px; -webkit-appearance: none; }
+.field textarea { height: 60px; resize: none; }
+.modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+.modal-actions .btn { flex: 1; }
+.notes-text { font-size: 14px; color: #3a3a3c; margin-top: 8px; font-style: italic; }
+.toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.empty { text-align: center; padding: 40px; color: #86868b; }
+.topic-list { margin-top: 8px; }
+.topic-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid #f0f0f0; }
+.topic-name { font-size: 14px; }
+.topic-meta { font-size: 12px; color: #86868b; }
+</style>
+</head>
+<body>
+<h1>📚 GCSE Revision Tracker</h1>
+<div class="toolbar">
+<button class="btn btn-primary" onclick="openLog()">+ Log Revision</button>
+<button class="btn btn-secondary" onclick="openAddSubject()">+ Subject</button>
+<button class="btn btn-secondary" onclick="exportData()">Export</button>
+<button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import</button>
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+</div>
+<div class="tabs" id="tabs"></div>
+<div id="content"></div>
+
+<div class="modal-overlay" id="logModal">
+<div class="modal">
+<h2>Log Revision Session</h2>
+<div class="field"><label>Subject</label><select id="logSubject"></select></div>
+<div class="field"><label>Topic</label><input id="logTopic" placeholder="e.g. Photosynthesis"></div>
+<div class="field"><label>Date</label><input type="date" id="logDate"></div>
+<div class="field"><label>Duration (mins)</label><input type="number" id="logDuration" placeholder="30"></div>
+<div class="field"><label>Confidence</label>
+<select id="logConfidence"><option value="red">Red - Not confident</option><option value="amber">Amber - Getting there</option><option value="green">Green - Confident</option></select>
+</div>
+<div class="field"><label>Notes</label><textarea id="logNotes" placeholder="Optional notes..."></textarea></div>
+<div class="modal-actions">
+<button class="btn btn-secondary" onclick="closeModal('logModal')">Cancel</button>
+<button class="btn btn-primary" onclick="saveLog()">Save</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="addSubjectModal">
+<div class="modal">
+<h2>Add Subject</h2>
+<div class="field"><label>Subject Name</label><input id="newSubjectName" placeholder="e.g. Chemistry"></div>
+<div class="modal-actions">
+<button class="btn btn-secondary" onclick="closeModal('addSubjectModal')">Cancel</button>
+<button class="btn btn-primary" onclick="saveSubject()">Add</button>
+</div>
+</div>
+</div>
+
+<script>
+const DEFAULT_SUBJECTS = ['English', 'Biology', 'Maths', 'Physics', 'French', 'Music'];
+let data = loadData();
+let activeTab = 'all';
+
+function loadData() {
+  const saved = localStorage.getItem('gcse-tracker');
+  if (saved) return JSON.parse(saved);
+  return { subjects: DEFAULT_SUBJECTS, sessions: [] };
+}
+
+function save() { localStorage.setItem('gcse-tracker', JSON.stringify(data)); }
+
+function render() {
+  renderTabs();
+  renderContent();
+}
+
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  const counts = {};
+  data.subjects.forEach(s => counts[s] = data.sessions.filter(x => x.subject === s).length);
+  tabs.innerHTML = `<button class="tab ${activeTab==='all'?'active':''}" onclick="setTab('all')">All</button>` +
+    data.subjects.map(s => `<button class="tab ${activeTab===s?'active':''}" onclick="setTab('${s}')">${s} (${counts[s]||0})</button>`).join('');
+}
+
+function renderContent() {
+  const el = document.getElementById('content');
+  if (activeTab === 'all') { renderOverview(el); }
+  else { renderSubject(el, activeTab); }
+}
+
+function renderOverview(el) {
+  const now = new Date();
+  let html = '';
+  data.subjects.forEach(subj => {
+    const sessions = data.sessions.filter(s => s.subject === subj);
+    const last = sessions.length ? sessions.sort((a,b) => b.date.localeCompare(a.date))[0] : null;
+    const lastDate = last ? new Date(last.date) : null;
+    const daysSince = lastDate ? Math.floor((now - lastDate) / 86400000) : null;
+    const stale = daysSince !== null && daysSince > 7;
+    const latestConf = last ? last.confidence : null;
+    const totalMins = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+    const topics = [...new Set(sessions.map(s => s.topic).filter(Boolean))];
+
+    html += `<div class="card">
+      <div class="subject-header">
+        <span class="subject-name">${subj}</span>
+        ${latestConf ? `<span class="confidence confidence-${latestConf}">${latestConf.toUpperCase()}</span>` : ''}
+      </div>
+      <div class="meta ${stale?'stale':''}">Last revised: ${last ? formatDate(last.date) + (stale ? ` ⚠️ ${daysSince} days ago` : ` (${daysSince}d ago)`) : 'Never'}</div>
+      <div class="meta">Sessions: ${sessions.length} · Total: ${totalMins} mins${topics.length ? ' · Topics: ' + topics.slice(0,3).join(', ') + (topics.length > 3 ? '...' : '') : ''}</div>
+    </div>`;
+  });
+  if (!data.subjects.length) html = '<div class="empty">No subjects added yet.</div>';
+  el.innerHTML = html;
+}
+
+function renderSubject(el, subj) {
+  const sessions = data.sessions.filter(s => s.subject === subj).sort((a,b) => b.date.localeCompare(a.date));
+  let html = `<div class="card"><div class="subject-header"><span class="subject-name">${subj}</span>
+    <button class="btn btn-small btn-secondary" onclick="deleteSubject('${subj}')">Delete Subject</button></div></div>`;
+  if (!sessions.length) { html += '<div class="empty">No revision sessions logged yet.</div>'; }
+  else {
+    sessions.forEach((s, i) => {
+      html += `<div class="card">
+        <div class="subject-header">
+          <span class="topic-name">${s.topic || 'General'}</span>
+          <span class="confidence confidence-${s.confidence}">${s.confidence.toUpperCase()}</span>
+        </div>
+        <div class="meta">${formatDate(s.date)}${s.duration ? ' · ' + s.duration + ' mins' : ''}</div>
+        ${s.notes ? `<div class="notes-text">${s.notes}</div>` : ''}
+        <div class="actions"><button class="btn btn-small btn-secondary" onclick="deleteSession(${data.sessions.indexOf(s)})">Delete</button></div>
+      </div>`;
+    });
+  }
+  el.innerHTML = html;
+}
+
+function setTab(t) { activeTab = t; render(); }
+
+function openLog() {
+  const sel = document.getElementById('logSubject');
+  sel.innerHTML = data.subjects.map(s => `<option value="${s}" ${s===activeTab&&activeTab!=='all'?'selected':''}>${s}</option>`).join('');
+  document.getElementById('logDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('logTopic').value = '';
+  document.getElementById('logDuration').value = '';
+  document.getElementById('logConfidence').value = 'amber';
+  document.getElementById('logNotes').value = '';
+  document.getElementById('logModal').classList.add('show');
+}
+
+function saveLog() {
+  const session = {
+    subject: document.getElementById('logSubject').value,
+    topic: document.getElementById('logTopic').value.trim(),
+    date: document.getElementById('logDate').value,
+    duration: parseInt(document.getElementById('logDuration').value) || 0,
+    confidence: document.getElementById('logConfidence').value,
+    notes: document.getElementById('logNotes').value.trim()
+  };
+  if (!session.date) return alert('Please select a date');
+  data.sessions.push(session);
+  save(); closeModal('logModal'); render();
+}
+
+function openAddSubject() { document.getElementById('newSubjectName').value = ''; document.getElementById('addSubjectModal').classList.add('show'); }
+
+function saveSubject() {
+  const name = document.getElementById('newSubjectName').value.trim();
+  if (!name) return;
+  if (data.subjects.includes(name)) return alert('Subject already exists');
+  data.subjects.push(name);
+  save(); closeModal('addSubjectModal'); render();
+}
+
+function deleteSubject(subj) {
+  if (!confirm(`Delete ${subj} and all its sessions?`)) return;
+  data.subjects = data.subjects.filter(s => s !== subj);
+  data.sessions = data.sessions.filter(s => s.subject !== subj);
+  activeTab = 'all'; save(); render();
+}
+
+function deleteSession(idx) {
+  if (!confirm('Delete this session?')) return;
+  data.sessions.splice(idx, 1);
+  save(); render();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function formatDate(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'gcse-revision-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (imported.subjects && imported.sessions) {
+        data = imported; save(); render();
+        alert('Data imported successfully');
+      } else { alert('Invalid file format'); }
+    } catch { alert('Error reading file'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+render();
+</script>
+</body>
+</html>
